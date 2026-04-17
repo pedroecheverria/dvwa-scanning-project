@@ -1,0 +1,17 @@
+# Secrets - never commit these
+.env
+*.pem
+*.key
+secrets.yml
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker
+*.log
+docker-compose.override.yml
+
+#Other 
+*.bak
+LAB-Guide.md
