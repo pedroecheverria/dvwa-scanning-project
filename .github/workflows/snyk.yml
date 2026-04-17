@@ -1,29 +1,29 @@
 name: Snyk - Dependency Scan
 
 on:
-push:
-branches:["**"]
-pull_request:
-branches:[main]
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [main]
 
 jobs:
-snyk:
-name: Scan dependencies
-runs-on: ubuntu-latest
-steps:
--name: Checkout code
-uses: actions/checkout@v4
+  snyk:
+    name: Scan dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
--name: Run Snyk to check for vulnerabilities
-uses: snyk/actions/docker@master
-continue-on-error:true
-env:
-SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-with:
-image: vulnerables/web-dvwa
-args: --severity-threshold=high
+      - name: Run Snyk to check for vulnerabilities
+        uses: snyk/actions/docker@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          image: vulnerables/web-dvwa
+          args: --severity-threshold=high
 
--name: Upload Snyk results to GitHub Code Scanning
-uses: github/codeql-action/upload-sarif@v3
-with:
-sarif_file: snyk.sarif
+      - name: Upload Snyk results to GitHub Code Scanning
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: snyk.sarif

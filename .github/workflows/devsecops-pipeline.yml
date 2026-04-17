@@ -1,83 +1,83 @@
 name: DevSecOps Master Pipeline
 
 on:
-push:
-branches:[main]
-pull_request:
-branches:[main]
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
 
 jobs:
-gitleaks:
-name: Secrets Scan
-runs-on: ubuntu-latest
-steps:
--uses: actions/checkout@v4
-with:
-fetch-depth:0
--uses: gitleaks/gitleaks-action@v2
-env:
-GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  gitleaks:
+    name: "Stage 1 - Secrets Scan"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-trivy:
-name: Container Scan
-runs-on: ubuntu-latest
-needs: gitleaks
-steps:
--uses: actions/checkout@v4
--run: docker build -t devsecops-dvwa:${{ github.sha }} .
--uses: aquasecurity/trivy-action@master
-with:
-image-ref: devsecops-dvwa:${{ github.sha }}
-format: sarif
-output: trivy-results.sarif
-severity: CRITICAL,HIGH
-exit-code:"0"
--uses: github/codeql-action/upload-sarif@v3
-with:
-sarif_file: trivy-results.sarif
+  trivy:
+    name: "Stage 2 - Container Scan"
+    runs-on: ubuntu-latest
+    needs: gitleaks
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t devsecops-dvwa:${{ github.sha }} .
+      - uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: devsecops-dvwa:${{ github.sha }}
+          format: sarif
+          output: trivy-results.sarif
+          severity: CRITICAL,HIGH
+          exit-code: "0"
+      - uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-results.sarif
 
-snyk:
-name: Dependency Scan
-runs-on: ubuntu-latest
-needs: gitleaks
-steps:
--uses: actions/checkout@v4
--uses: snyk/actions/docker@master
-continue-on-error:true
-env:
-SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-with:
-image: vulnerables/web-dvwa
-args: --severity-threshold=high
--uses: github/codeql-action/upload-sarif@v3
-with:
-sarif_file: snyk.sarif
+  snyk:
+    name: "Stage 2 - Dependency Scan"
+    runs-on: ubuntu-latest
+    needs: gitleaks
+    steps:
+      - uses: actions/checkout@v4
+      - uses: snyk/actions/docker@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          image: vulnerables/web-dvwa
+          args: --severity-threshold=high
+      - uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: snyk.sarif
 
-checkov:
-name: IaC Scan
-runs-on: ubuntu-latest
-needs: gitleaks
-steps:
--uses: actions/checkout@v4
--uses: bridgecrewio/checkov-action@master
-with:
-directory: .
-framework: dockerfile,docker_compose
-soft_fail:true
+  checkov:
+    name: "Stage 2 - IaC Scan"
+    runs-on: ubuntu-latest
+    needs: gitleaks
+    steps:
+      - uses: actions/checkout@v4
+      - uses: bridgecrewio/checkov-action@master
+        with:
+          directory: .
+          framework: dockerfile,docker_compose
+          soft_fail: true
 
-sonarcloud:
-name: SAST Scan
-runs-on: ubuntu-latest
-needs: gitleaks
-steps:
--uses: actions/checkout@v4
-with:
-fetch-depth:0
--uses: SonarSource/sonarcloud-github-action@master
-env:
-GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-with:
-          args:>
+  sonarcloud:
+    name: "Stage 2 - SAST Scan"
+    runs-on: ubuntu-latest
+    needs: gitleaks
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
             -Dsonar.organization=Pedro Echeverría
             -Dsonar.projectKey=pedroecheverria
