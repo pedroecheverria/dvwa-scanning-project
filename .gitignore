@@ -15,3 +15,5 @@ docker-compose.override.yml
 #Other 
 *.bak
 LAB-Guide.md
+APRENDIZAJES-DEVSECOPS.md
+
